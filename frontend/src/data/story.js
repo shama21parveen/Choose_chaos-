@@ -1,0 +1,191 @@
+// Each scene has: text, mood (sound + effects), art (which illustration),
+// sky (colour of the sky), particles, fog density, place/time label.
+// `doubt` raises the Doubt meter. `requires` hides a choice until Doubt is high enough.
+
+export const story = {
+  id: "left-on-read",
+  title: "Left on Read",
+  start: "arrival",
+  scenes: {
+    arrival: {
+      mood: "fog",
+      art: "bus",
+      sky: "night",
+      particles: "dust",
+      fog: 1,
+      place: "Dhundhgiri Bus Stand",
+      time: "12:04 AM",
+      text: "The last bus drops you at Dhundhgiri at midnight. The fog is so thick that you cannot see your own hands. Two days ago, your sister Naina sent you one message: 'Come soon.' Now her phone is switched off. Your last text to her still says 'delivered'. Never 'read'.",
+      choices: [
+        { label: "Walk to the hotel on the hill", next: "hotel" },
+        { label: "Ask the old man at the tea stall", next: "tea" },
+      ],
+    },
+
+    tea: {
+      mood: "fog",
+      art: "tea",
+      sky: "night",
+      particles: "embers",
+      fog: 1,
+      place: "Kaka's Tea Stall",
+      time: "12:20 AM",
+      text: "The tea stall owner lowers his voice. 'A girl in a red scarf left with a man in a grey coat. They went toward the lake.' He looks around. 'And child, do not trust the police here. Inspector Rawat likes the fog.'",
+      choices: [
+        { label: "Follow the road to the lake", next: "lake" },
+        { label: "Go to the hotel first", next: "hotel" },
+      ],
+    },
+
+    hotel: {
+      mood: "fog",
+      art: "hotel",
+      sky: "night",
+      particles: "dust",
+      fog: 1,
+      place: "Hotel Dhundh",
+      time: "12:41 AM",
+      text: "Mr. Bisht, the hotel manager, smiles too much. 'No guest named Naina,' he says. But behind the counter, a red scarf hangs on a hook. Naina's scarf. You gave it to her yourself.",
+      choices: [
+        { label: "Ask him about the scarf", next: "confront" },
+        { label: "Pretend you saw nothing and take a room", next: "room", doubt: 1 },
+      ],
+    },
+
+    confront: {
+      mood: "danger",
+      art: "lobby",
+      sky: "night",
+      particles: "embers",
+      fog: 1,
+      // Seconds for the choice timer; if it expires, take the second option (run).
+      timeLimit: 12,
+      timeoutChoice: 1,
+      place: "The Lobby",
+      time: "12:47 AM",
+      scrawl: "SLEEP.",
+      text: "His smile drops. 'You are tired,' he says softly, and slides a cup of tea across the counter. 'Drink. Then sleep.' The lights flicker once. Twice. Then everything goes dark.",
+      choices: [
+        { label: "Drink the tea", next: "ending3" },
+        { label: "Knock the cup away and run into the fog", next: "lake", doubt: 1 },
+      ],
+    },
+
+    room: {
+      mood: "danger",
+      art: "room",
+      sky: "night",
+      particles: "rain",
+      fog: 1,
+      place: "Room 7",
+      time: "1:10 AM",
+      scrawl: "DON'T TRUST THE CALLER",
+      text: "Room 7 smells of wet wood. Under the pillow, you find Naina's diary. The last page says: 'If someone calls you here, do not trust them. Not even if the voice sounds like mine.' A photo slips out. It is you, sleeping. Taken tonight.",
+      choices: [
+        { label: "Keep reading the diary", next: "diary", doubt: 2 },
+        { label: "Take the diary and run to the police station", next: "police" },
+      ],
+    },
+
+    diary: {
+      mood: "danger",
+      art: "room",
+      sky: "blood",
+      particles: "rain",
+      fog: 1,
+      place: "Room 7, Still",
+      time: "1:32 AM",
+      scrawl: "WHO IS REALLY MISSING?",
+      text: "The next pages are empty, except one line written again and again until the paper tears: 'Who is really missing? Who is really missing? Who is really missing?'",
+      choices: [
+        { label: "Go to the lake. Now.", next: "lake" },
+        { label: "Go to the police station", next: "police" },
+      ],
+    },
+
+    police: {
+      mood: "fog",
+      art: "police",
+      sky: "night",
+      particles: "dust",
+      fog: 1,
+      place: "Dhundhgiri Police Station",
+      time: "2:05 AM",
+      text: "Inspector Rawat opens the door before you knock. 'I was expecting you,' he says. 'I sent you that message. Naina asked me to. She is safe. My jeep is outside.' His voice is warm. His shoes are covered in lake mud.",
+      choices: [
+        { label: "Get in the jeep", next: "ending1" },
+        { label: "Say you need a minute and walk to the lake", next: "lake" },
+      ],
+    },
+
+    lake: {
+      mood: "calm",
+      art: "lake",
+      sky: "night",
+      particles: "fireflies",
+      fog: 1,
+      place: "Dhundh Lake",
+      time: "2:40 AM",
+      text: "At the lake, a girl sits on the stone steps with her back to you. It is Naina. She turns slowly. 'I never sent you a message,' she whispers. 'Someone took my phone three days ago. Why did you come alone?'",
+      choices: [
+        { label: "Take her hand and leave Dhundhgiri together", next: "ending2" },
+        {
+          label: "Ask her: 'Why do I remember your face differently?'",
+          next: "ending4",
+          requires: 3,
+          secret: true,
+        },
+      ],
+    },
+
+    ending1: {
+      mood: "danger",
+      art: "road",
+      sky: "blood",
+      particles: "rain",
+      fog: 2,
+      place: "The Mountain Road",
+      time: "2:58 AM",
+      ending: { id: "e1", title: "The Wrong Ride" },
+      text: "The jeep drives away from the town, not toward the lake. Rawat hums softly. 'Don't worry,' he says. 'Naina is waiting. So are the others.' Behind you, the fog closes like a door.",
+    },
+
+    ending2: {
+      mood: "calm",
+      art: "lake",
+      sky: "dawn",
+      particles: "fireflies",
+      fog: 1,
+      place: "First Light",
+      time: "5:50 AM",
+      ending: { id: "e2", title: "Seen at Last" },
+      text: "You and Naina walk to the morning bus as the fog lifts. Her phone is gone, but yours buzzes with a new message: 'Seen.' Someone is still watching Dhundhgiri. But for today, you are both safe.",
+    },
+
+    ending3: {
+      mood: "danger",
+      art: "hotel",
+      sky: "night",
+      particles: "dust",
+      fog: 3,
+      place: "Hotel Dhundh",
+      time: "??:??",
+      ending: { id: "e3", title: "The Fog Takes You" },
+      scrawl: "SLEEP.",
+      text: "The tea is warm and sweet. Your eyes grow heavy. The last thing you hear is the front door locking. When you wake up, there is no hotel and no bus. Only fog. And you cannot remember your own name.",
+    },
+
+    ending4: {
+      mood: "secret",
+      art: "lake",
+      sky: "void",
+      particles: "dust",
+      fog: 2,
+      place: "Dhundh Lake",
+      time: "3 days ago",
+      ending: { id: "e4", title: "Who Is Missing?" },
+      scrawl: "YOU",
+      text: "Naina's face softens. 'You hit your head in the fog three days ago,' she says. 'The police told me my sister was missing.' She holds out your phone. The message 'Come soon' is in your outbox. You sent it to yourself. You were never the one searching. You were the one who was missing.",
+    },
+  },
+};
