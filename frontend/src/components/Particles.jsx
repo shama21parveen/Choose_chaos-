@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 
-// type: "fireflies" | "embers" | "rain" | "dust"
+// type: "fireflies" | "embers" | "rain" | "dust" | "petals" | "hearts"
 export default function Particles({ type = "dust" }) {
   const ref = useRef(null);
 
@@ -57,6 +57,48 @@ export default function Particles({ type = "dust" }) {
           g.shadowBlur = 10;
           g.beginPath();
           g.arc(it.x, it.y, it.r, 0, 6.28);
+          g.fill();
+        } else if (type === "hearts") {
+          it.y -= it.s * 0.9 + 0.3;
+          it.x += Math.sin(t / 1400 + it.p) * 0.6;
+          if (it.y < -20) {
+            it.y = h + 20;
+            it.x = Math.random() * w;
+          }
+          const a = 0.35 + it.s * 0.5;
+          g.shadowBlur = 0;
+          if (it.p > 4.2) {
+            // little sparkle
+            g.fillStyle = `rgba(255, 255, 255, ${a})`;
+            const k = it.r * 2.4;
+            g.beginPath();
+            g.moveTo(it.x, it.y - k);
+            g.quadraticCurveTo(it.x, it.y, it.x + k, it.y);
+            g.quadraticCurveTo(it.x, it.y, it.x, it.y + k);
+            g.quadraticCurveTo(it.x, it.y, it.x - k, it.y);
+            g.quadraticCurveTo(it.x, it.y, it.x, it.y - k);
+            g.fill();
+          } else {
+            // heart
+            const k = it.r * 1.8 + 2;
+            g.fillStyle = `rgba(255, ${110 + it.s * 80}, ${160 + it.s * 50}, ${a})`;
+            g.beginPath();
+            g.moveTo(it.x, it.y + k);
+            g.bezierCurveTo(it.x - k * 1.6, it.y - k * 0.2, it.x - k * 0.8, it.y - k * 1.4, it.x, it.y - k * 0.5);
+            g.bezierCurveTo(it.x + k * 0.8, it.y - k * 1.4, it.x + k * 1.6, it.y - k * 0.2, it.x, it.y + k);
+            g.fill();
+          }
+        } else if (type === "petals") {
+          it.y += it.s * 1.1 + 0.4;
+          it.x += Math.sin(t / 1200 + it.p) * 0.9;
+          if (it.y > h + 10) {
+            it.y = -10;
+            it.x = Math.random() * w;
+          }
+          g.shadowBlur = 0;
+          g.fillStyle = `rgba(255, ${150 + it.s * 60}, ${185 + it.s * 40}, ${0.45 + it.s * 0.4})`;
+          g.beginPath();
+          g.ellipse(it.x, it.y, it.r * 2.6, it.r * 1.5, it.p + t / 1500, 0, 6.28);
           g.fill();
         } else if (type === "rain") {
           it.y += 10 * it.s + 8;

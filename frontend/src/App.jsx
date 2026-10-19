@@ -1,50 +1,52 @@
-import { useEffect, useState } from "react";
-import { AnimatePresence, motion } from "framer-motion";
-import { story } from "./data/story";
-import Home from "./components/Home";
-import StoryView from "./components/StoryView";
-import SceneArt from "./components/SceneArt";
-import Particles from "./components/Particles";
-import FogLayer from "./components/FogLayer";
-import TorchCursor from "./components/TorchCursor";
-import SoundToggle from "./components/SoundToggle";
-import TorchReveal from "./components/TorchReveal";
-import { startAudio, setMood, setHeartbeat, toggleMute, isStarted, isMuted, tick, click, sting } from "./audio/sound";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { Navigate, Route, Routes, useLocation } from "react-router-dom";
+import { AppContext } from "./context";
+import Hub from "./pages/Hub";
+import GenrePage from "./pages/GenrePage";
+import Play from "./pages/Play";
+import AuthModal from "./components/AuthModal";
+import { startAudio, toggleMute, isStarted, isMuted } from "./audio/sound";
 
-const TOTAL_ENDINGS = Object.values(story.scenes).filter((s) => s.ending).length;
-const STORAGE_KEY = "choose-chaos-endings";
+const ENDINGS_KEY = "choose-chaos-endings";
+const USER_KEY = "choose-chaos-user";
 
-function loadEndings() {
+function read(key, fallback) {
   try {
-    return JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+    const v = JSON.parse(localStorage.getItem(key));
+    return v ?? fallback;
   } catch {
-    return [];
+    return fallback;
   }
 }
-function saveEndings(list) {
+function write(key, value) {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
+    localStorage.setItem(key, JSON.stringify(value));
   } catch {
     /* storage not available, ignore */
   }
 }
 
+function ScrollToTop() {
+  const { pathname } = useLocation();
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "instant" });
+  }, [pathname]);
+  return null;
+}
+
+// App = the shell. It owns the things every page needs
+// (unlocked endings, sound, demo login) and decides which page to show.
 export default function App() {
-  const [screen, setScreen] = useState("home");
-  const [current, setCurrent] = useState(story.start);
-  const [doubt, setDoubt] = useState(0);
-  const [done, setDone] = useState(false);
-  const [torch, setTorch] = useState(false);
-  const [endings, setEndings] = useState(loadEndings);
+  const { pathname } = useLocation();
+  const [endings, setEndings] = useState(() => read(ENDINGS_KEY, []));
+  const [user, setUser] = useState(() => read(USER_KEY, null));
   const [soundOn, setSoundOn] = useState(false);
-  const [impact, setImpact] = useState(false);
+  const [authOpen, setAuthOpen] = useState(false);
 
-  const scene = story.scenes[current];
-  const inStory = screen === "story";
-  const mood = inStory ? scene.mood : "fog";
-  const choices = (scene.choices || []).filter((c) => !c.requires || doubt >= c.requires);
+  useEffect(() => write(ENDINGS_KEY, endings), [endings]);
+  useEffect(() => write(USER_KEY, user), [user]);
 
-  // Mouse parallax: sets --mx / --my (-1 to 1) used by the art layers
+  // Mouse position -> CSS variables (parallax + torch + neon glow)
   useEffect(() => {
     let raf;
     const move = (e) => {
@@ -64,128 +66,52 @@ export default function App() {
     };
   }, []);
 
-  // Sound follows the mood
-  useEffect(() => {
-    setMood(mood);
-  }, [mood, soundOn]);
-
-  // Heartbeat when Doubt is high
-  useEffect(() => {
-    setHeartbeat(inStory && doubt >= 3 ? doubt - 2 : 0);
-  }, [inStory, doubt, soundOn]);
-
-  // Jump-scare when entering a danger scene
-  useEffect(() => {
-    if (inStory && scene.mood === "danger") {
-      sting();
-      setImpact(true);
-      const t = setTimeout(() => setImpact(false), 700);
-      return () => clearTimeout(t);
-    }
-  }, [current, inStory]);
-
-  const ensureAudio = () => {
+  const ensureAudio = useCallback(() => {
     startAudio();
     setSoundOn(isStarted() && !isMuted());
-  };
+  }, []);
 
-  const handleSoundToggle = () => {
-    if (!isStarted()) {
-      ensureAudio();
-    } else {
-      setSoundOn(!toggleMute());
-    }
-  };
+  const toggleSound = useCallback(() => {
+    if (!isStarted()) ensureAudio();
+    else setSoundOn(!toggleMute());
+  }, [ensureAudio]);
 
-  const startStory = () => {
-    ensureAudio();
-    click();
-    setCurrent(story.start);
-    setDoubt(0);
-    setDone(false);
-    setScreen("story");
-    window.scrollTo(0, 0);
-  };
+  const addEnding = useCallback((id) => {
+    setEndings((prev) => (prev.includes(id) ? prev : [...prev, id]));
+  }, []);
 
-  const goHome = () => {
-    click();
-    setScreen("home");
-  };
-
-  const go = (choice) => {
-    click();
-    setDone(false);
-    setDoubt((d) => d + (choice.doubt || 0));
-    setCurrent(choice.next);
-
-    const target = story.scenes[choice.next];
-    if (target.ending && !endings.includes(target.ending.id)) {
-      const updated = [...endings, target.ending.id];
-      setEndings(updated);
-      saveEndings(updated);
-    }
-  };
+  const ctx = useMemo(
+    () => ({
+      endings,
+      addEnding,
+      soundOn,
+      ensureAudio,
+      toggleSound,
+      user,
+      login: (u) => setUser(u),
+      logout: () => setUser(null),
+      openAuth: () => setAuthOpen(true),
+    }),
+    [endings, addEnding, soundOn, ensureAudio, toggleSound, user]
+  );
 
   return (
-    <div className="relative min-h-screen overflow-x-hidden bg-[#040807]">
-      {/* Story background art (crossfades between scenes) */}
-      <AnimatePresence>
-        {inStory && (
-          <motion.div
-            key={`${scene.art}-${scene.sky}`}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 1.4 }}
-            className="fixed inset-0 z-[1]"
-          >
-            <SceneArt scene={scene.art} sky={scene.sky} />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-black/30" />
-          </motion.div>
-        )}
-      </AnimatePresence>
+    <AppContext.Provider value={ctx}>
+      <div className="relative min-h-screen overflow-x-clip bg-[#05060f]">
+        <ScrollToTop />
+        <Routes>
+          <Route path="/" element={<Hub />} />
+          <Route path="/genre/:id" element={<GenrePage />} />
+          <Route path="/play/:id" element={<Play />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
 
-      <FogLayer density={inStory ? scene.fog : 1} />
-      <Particles type={inStory ? scene.particles : "dust"} />
-      <div className="vignette" />
-      {!inStory && <TorchReveal />}
-      <TorchCursor on={torch && inStory} />
-      {inStory && doubt >= 4 && <div className="vignette-pulse" />}
-      {impact && <div className="flash" />}
-      <div className="grain" />
-      <SoundToggle on={soundOn} onToggle={handleSoundToggle} />
-
-      <main className={`relative z-10 ${impact ? "impact" : ""}`}>
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={inStory ? current : "home"}
-            initial={{ opacity: 0, filter: "blur(10px)" }}
-            animate={{ opacity: 1, filter: "blur(0px)" }}
-            exit={{ opacity: 0, filter: "blur(10px)" }}
-            transition={{ duration: 0.6 }}
-          >
-            {!inStory ? (
-              <Home onPlay={startStory} onEnter={ensureAudio} endings={endings} />
-            ) : (
-              <StoryView
-                scene={scene}
-                doubt={doubt}
-                done={done}
-                onDone={() => setDone(true)}
-                onTick={tick}
-                choices={choices}
-                onChoice={go}
-                onRestart={startStory}
-                onHome={goHome}
-                endingsCount={endings.length}
-                totalEndings={TOTAL_ENDINGS}
-                torch={torch}
-                onTorch={() => setTorch((t) => !t)}
-              />
-            )}
-          </motion.div>
-        </AnimatePresence>
-      </main>
-    </div>
+        <AuthModal
+          open={authOpen}
+          onClose={() => setAuthOpen(false)}
+          onLogin={(u) => setUser(u)}
+        />
+      </div>
+    </AppContext.Provider>
   );
 }

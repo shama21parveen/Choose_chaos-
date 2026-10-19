@@ -8,7 +8,11 @@ const SKIES = {
   dawn: ["#1c2a3d", "#a4604a", "#f0b574", "#ffd9a0", "#fff1cf"],
   blood: ["#12030a", "#2a0710", "#4a0f16", "#ff5a5a", "#ffb0a0"],
   void: ["#0a0212", "#1c0728", "#3a0e4d", "#d98cff", "#f3dcff"],
+  // soft romance skies
+  sunset: ["#4a2a6a", "#d4608a", "#ffb38a", "#ffd9a0", "#fff1cf"],
+  twilight: ["#1b1740", "#4d2a6e", "#c85a86", "#ffb0c8", "#fff1e6"],
 };
+const SOFT = ["sunset", "twilight"];
 
 function rng(seed) {
   let s = seed;
@@ -48,7 +52,7 @@ function Sky({ id, sky }) {
         </radialGradient>
       </defs>
       <rect width="1600" height="900" fill={`url(#${id}-sky)`} />
-      {sky !== "dawn" &&
+      {sky !== "dawn" && sky !== "sunset" &&
         stars.map((s, i) => (
           <circle
             key={i}
@@ -60,7 +64,7 @@ function Sky({ id, sky }) {
             style={{ animationDelay: `${s.d}s` }}
           />
         ))}
-      {sky === "dawn" ? (
+      {sky === "dawn" || sky === "sunset" ? (
         <>
           <circle cx="800" cy="610" r="380" fill={`url(#${id}-glow)`} />
           <circle cx="800" cy="610" r="90" fill={c[4]} />
@@ -83,7 +87,7 @@ function Sky({ id, sky }) {
   );
 }
 
-function Hills() {
+function Hills({ soft }) {
   return (
     <svg {...SVG} className="h-full w-full">
       <defs>
@@ -95,18 +99,18 @@ function Hills() {
       </defs>
       <path
         d="M0 640 L120 560 L260 620 L420 480 L600 610 L760 520 L940 630 L1120 490 L1300 600 L1460 530 L1600 610 L1600 900 L0 900Z"
-        fill="#0d211a"
+        fill={soft ? "#5a2a5e" : "#0d211a"}
       />
       <rect y="440" width="1600" height="300" fill="url(#haze)" />
       <path
         d="M0 720 L180 640 L340 700 L520 600 L700 710 L900 630 L1080 720 L1260 620 L1440 700 L1600 650 L1600 900 L0 900Z"
-        fill="#08150f"
+        fill={soft ? "#3d1c48" : "#08150f"}
       />
     </svg>
   );
 }
 
-function Pines() {
+function Pines({ soft }) {
   const trees = useMemo(() => {
     const r = rng(42);
     const out = [];
@@ -118,7 +122,7 @@ function Pines() {
 
   return (
     <svg {...SVG} className="h-full w-full">
-      <g fill="#040a08">
+      <g fill={soft ? "#2a1235" : "#040a08"}>
         {trees.map((t, i) => (
           <path
             key={i}
@@ -128,19 +132,19 @@ function Pines() {
           />
         ))}
       </g>
-      <rect y="826" width="1600" height="80" fill="#040a08" />
+      <rect y="826" width="1600" height="80" fill={soft ? "#2a1235" : "#040a08"} />
     </svg>
   );
 }
 
 /* ---------------- Scene props ---------------- */
 
-function Ground() {
+function Ground({ soft }) {
   return (
     <g>
-      <rect y="800" width="1600" height="100" fill="#030605" />
+      <rect y="800" width="1600" height="100" fill={soft ? "#231030" : "#030605"} />
       {Array.from({ length: 12 }, (_, i) => (
-        <rect key={i} x={i * 140 + 20} y="850" width="70" height="6" fill="#1b2723" />
+        <rect key={i} x={i * 140 + 20} y="850" width="70" height="6" fill={soft ? "#4a2a5a" : "#1b2723"} />
       ))}
     </g>
   );
@@ -428,12 +432,105 @@ function Naina({ x, opacity }) {
   );
 }
 
-const PROPS = { bus: Bus, tea: TeaStall, hotel: Hotel, lobby: Lobby, room: Room, police: Police, road: Road };
+
+/* ---------------- Romance props ---------------- */
+
+function Cafe() {
+  return (
+    <g transform="translate(860 340)">
+      {/* roof + walls */}
+      <polygon points="-24,150 280,40 584,150" fill="#5a2a58" />
+      <rect x="0" y="150" width="560" height="360" rx="10" fill="#3a1d44" />
+      {/* big warm window */}
+      <rect x="40" y="230" width="330" height="200" rx="8" fill="#ffd9a0" />
+      <circle className="flicker-slow" cx="205" cy="330" r="230" fill="url(#glow-warm)" opacity=".55" />
+      <line x1="205" y1="230" x2="205" y2="430" stroke="#3a1d44" strokeWidth="8" />
+      <line x1="40" y1="330" x2="370" y2="330" stroke="#3a1d44" strokeWidth="8" />
+      {/* two people at the window table */}
+      <circle cx="120" cy="352" r="20" fill="#2a1233" />
+      <path d="M88 430 Q92 378 120 376 Q148 378 152 430Z" fill="#2a1233" />
+      <circle cx="290" cy="352" r="20" fill="#2a1233" />
+      <path d="M258 430 Q262 378 290 376 Q318 378 322 430Z" fill="#2a1233" />
+      {[0, 1].map((i) => (
+        <circle
+          key={i}
+          className="steam"
+          style={{ animationDelay: `${i * 1.3}s` }}
+          cx={192 + i * 26}
+          cy="400"
+          r="8"
+          fill="#fff6e8"
+          opacity=".55"
+        />
+      ))}
+      {/* striped awning */}
+      <path d="M20 200 L360 200 L380 236 L0 236Z" fill="#ff7aa8" />
+      {[0, 1, 2, 3, 4, 5].map((i) => (
+        <path key={i} d={`M${20 + i * 57} 200 L${20 + i * 57 + 28} 200 L${10 + i * 62 + 28} 236 L${i * 62} 236Z`} fill="#fff1e6" opacity=".85" />
+      ))}
+      {/* door */}
+      <rect x="410" y="270" width="100" height="240" rx="8" fill="#241028" />
+      <circle cx="430" cy="400" r="5" fill="#ffd9a0" />
+      {/* sign */}
+      <rect x="150" y="160" width="260" height="46" rx="8" fill="#241028" />
+      <text x="280" y="196" textAnchor="middle" fontSize="34" fill="#ffd9a0" fontFamily="Bebas Neue" letterSpacing="8">
+        CLOUD NINE
+      </text>
+      {/* string lights */}
+      <path d="M-10 130 Q150 190 280 130 Q420 190 570 130" fill="none" stroke="#2a1233" strokeWidth="3" />
+      {[20, 90, 160, 230, 300, 370, 440, 510].map((x, i) => (
+        <circle key={x} className="twinkle" style={{ animationDelay: `${i * 0.3}s` }} cx={x} cy={150 + Math.sin(i) * 12} r="6" fill="#ffe6a8" />
+      ))}
+      {/* flower pot */}
+      <rect x="-20" y="470" width="30" height="40" rx="4" fill="#7a3a50" />
+      <circle cx="-5" cy="462" r="14" fill="#ff9ec0" />
+    </g>
+  );
+}
+
+function Viewpoint() {
+  return (
+    <g>
+      {/* grassy ledge */}
+      <path d="M0 830 Q400 780 900 800 Q1300 790 1600 830 L1600 900 L0 900Z" fill="#2a1235" />
+      {/* railing */}
+      <g stroke="#1a0b22" strokeWidth="6" fill="none">
+        <line x1="700" y1="760" x2="1600" y2="770" />
+        {[720, 820, 920, 1020, 1120, 1220, 1320, 1420, 1520].map((x) => (
+          <line key={x} x1={x} y1="760" x2={x} y2="830" />
+        ))}
+      </g>
+      {/* bench + two people sitting close */}
+      <g transform="translate(980 690)">
+        <rect x="0" y="86" width="300" height="14" rx="4" fill="#1a0b22" />
+        <rect x="0" y="40" width="300" height="10" rx="4" fill="#1a0b22" />
+        <rect x="16" y="100" width="10" height="50" fill="#1a0b22" />
+        <rect x="274" y="100" width="10" height="50" fill="#1a0b22" />
+        <circle cx="112" cy="34" r="20" fill="#14081a" />
+        <path d="M80 90 Q84 52 112 50 Q140 52 144 90Z" fill="#14081a" />
+        <circle cx="176" cy="38" r="20" fill="#14081a" />
+        <path d="M144 90 Q148 56 176 54 Q204 56 208 90Z" fill="#14081a" />
+      </g>
+      {/* lamp post with string lights */}
+      <line x1="940" y1="560" x2="940" y2="830" stroke="#1a0b22" strokeWidth="8" />
+      <path d="M940 570 Q1110 640 1300 570" fill="none" stroke="#1a0b22" strokeWidth="3" />
+      {[1010, 1075, 1140, 1205, 1270].map((x, i) => (
+        <circle key={x} className="twinkle" style={{ animationDelay: `${i * 0.4}s` }} cx={x} cy={600 + Math.sin(i * 0.9) * 20} r="7" fill="#ffe6a8" />
+      ))}
+      <circle cx="940" cy="560" r="12" fill="#ffe6a8" />
+      <circle className="flicker-slow" cx="940" cy="560" r="120" fill="url(#glow-warm)" opacity=".5" />
+    </g>
+  );
+}
+
+const PROPS = { cafe: Cafe, viewpoint: Viewpoint, bus: Bus, tea: TeaStall, hotel: Hotel, lobby: Lobby, room: Room, police: Police, road: Road };
 const INTERIOR = ["lobby", "room"];
+const OWN_GROUND = ["lake", "viewpoint"];
 
 function Props({ scene, sky }) {
   const Prop = PROPS[scene];
-  const showGround = scene !== "lake" && !INTERIOR.includes(scene);
+  const showGround = !OWN_GROUND.includes(scene) && !INTERIOR.includes(scene);
+  const soft = SOFT.includes(sky);
   return (
     <svg {...SVG} className={`h-full w-full ${sky === "void" ? "rgb-split" : ""}`}>
       <defs>
@@ -458,7 +555,7 @@ function Props({ scene, sky }) {
           <stop offset="1" stopColor="#030706" />
         </linearGradient>
       </defs>
-      {showGround && <Ground />}
+      {showGround && <Ground soft={soft} />}
       {scene === "lake" ? <Lake sky={sky} /> : Prop ? <Prop /> : null}
     </svg>
   );
@@ -469,6 +566,7 @@ function Props({ scene, sky }) {
 export default function SceneArt({ scene = "hotel", sky = "night", still = false }) {
   const id = useId().replace(/:/g, "");
   const interior = INTERIOR.includes(scene);
+  const soft = SOFT.includes(sky);
 
   return (
     <div className="absolute inset-0 overflow-hidden">
@@ -480,10 +578,10 @@ export default function SceneArt({ scene = "hotel", sky = "night", still = false
             <Sky id={id} sky={sky} />
           </div>
           <div className={`layer ${still ? "" : "px-1"}`}>
-            <Hills />
+            <Hills soft={soft} />
           </div>
           <div className={`layer ${still ? "" : "px-2"}`}>
-            <Pines />
+            <Pines soft={soft} />
           </div>
         </>
       )}

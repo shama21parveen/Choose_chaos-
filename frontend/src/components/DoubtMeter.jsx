@@ -1,31 +1,21 @@
-import { motion, useReducedMotion } from "framer-motion";
-
-export default function DoubtMeter({ doubt, max = 5 }) {
-  const reduceMotion = useReducedMotion();
+export default function DoubtMeter({ doubt, max = 5, label = "Doubt", tone = "red" }) {
   const pct = Math.min(doubt / max, 1) * 100;
+  const soft = tone === "soft" || tone === "softlight";
+  const light = tone === "softlight";
   return (
     <div
-      className={`doubt-meter flex items-center gap-2 font-case text-xs uppercase tracking-widest text-red-300/80 ${doubt >= 3 ? "doubt-meter-high" : ""}`}
-      role="progressbar"
-      aria-label="Doubt level"
-      aria-valuemin={0}
-      aria-valuemax={max}
-      aria-valuenow={Math.min(doubt, max)}
+      className={`flex items-center gap-2 font-case text-xs uppercase tracking-widest ${
+        light ? "text-white/90" : soft ? "text-[#7a3a6a]" : "text-red-300/80"
+      }`}
     >
       <span className={doubt >= 3 ? "heartbeat" : ""}>♥</span>
-      <span>Doubt</span>
-      <div className="doubt-track h-1.5 w-24 overflow-hidden rounded bg-white/10">
-        <motion.div
-          className="doubt-fill h-full rounded bg-red-500"
-          animate={{
-            width: `${pct}%`,
-            backgroundColor: doubt >= 4 ? "#dc2626" : "#ef4444",
-            boxShadow: doubt >= 3 ? "0 0 10px rgba(239, 68, 68, 0.65)" : "none",
-          }}
-          transition={{ duration: reduceMotion ? 0 : 0.45, ease: "easeOut" }}
+      <span>{label}</span>
+      <div className={`h-1.5 w-24 overflow-hidden rounded ${light ? "bg-white/25" : soft ? "bg-[#7a3a6a]/15" : "bg-white/10"}`}>
+        <div
+          className={`h-full transition-all duration-700 ${soft ? "bg-gradient-to-r from-[#ff9ec0] to-[#ff5c8d]" : "bg-red-500"}`}
+          style={{ width: `${pct}%` }}
         />
       </div>
-      <span className="tabular-nums text-red-200/60">{Math.min(doubt, max)}/{max}</span>
     </div>
   );
 }

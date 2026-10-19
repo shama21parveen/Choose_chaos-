@@ -90,6 +90,21 @@ body {
   pointer-events: none;
   background: radial-gradient(circle 300px at var(--tx, 50%) var(--ty, 50%), transparent 0%, rgba(0, 0, 0, 0.8) 100%);
 }
+.torch-cursor-active,
+.torch-cursor-active * {
+  cursor: none !important;
+}
+.torch-cursor {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 38px;
+  height: 38px;
+  overflow: visible;
+  transform: translate3d(calc(var(--tx, 50%) - 7px), calc(var(--ty, 50%) - 7px), 0);
+  filter: drop-shadow(0 0 7px rgba(255, 205, 110, 0.8));
+  will-change: transform;
+}
 @media (hover: none) {
   .torch { display: none; }
 }

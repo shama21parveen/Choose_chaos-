@@ -1,12 +1,12 @@
-import { motion, useReducedMotion } from "framer-motion";
-import { useState } from "react";
+import { motion } from "framer-motion";
 import SceneArt from "./SceneArt";
 import SplitTitle from "./SplitTitle";
 import SectionGlow from "./SectionGlow";
 import TiltCard from "./TiltCard";
 import ChapterRow from "./ChapterRow";
 import Footer from "./Footer";
-import { story } from "../data/story";
+import FooterFx from "./FooterFx";
+import { story } from "../data/story"; // Home page shows the thriller as the featured story
 
 const reveal = {
   initial: { opacity: 0, y: 40 },
@@ -41,7 +41,14 @@ const GENRES = [
   },
   { id: "horror", name: "Horror", tag: "Don't look behind you.", bg: "from-red-950 via-black to-black", icon: "👻" },
   { id: "scifi", name: "Sci-Fi", tag: "Space is quiet. Too quiet.", bg: "from-indigo-950 via-black to-cyan-950", icon: "🚀" },
-  { id: "romance", name: "Romance", tag: "Left on read... or not?", bg: "from-rose-950 via-black to-purple-950", icon: "💌" },
+  {
+    id: "romance",
+    name: "Romance",
+    tag: "Crash into your enemy. Fall for him anyway.",
+    ready: true,
+    bg: "from-rose-900 via-purple-950 to-black",
+    icon: "💌",
+  },
 ];
 
 const CHAT = [
@@ -68,8 +75,6 @@ function Bats() {
 }
 
 export default function Home({ onPlay, onEnter, endings = [] }) {
-  const [messageRumble, setMessageRumble] = useState(0);
-  const reduceMotion = useReducedMotion();
   const entries = Object.entries(story.scenes);
   const sceneCount = entries.filter(([, s]) => !s.ending).length;
   const endingCount = entries.filter(([, s]) => s.ending).length;
@@ -144,7 +149,7 @@ export default function Home({ onPlay, onEnter, endings = [] }) {
             className="mt-10 flex flex-wrap items-center justify-center gap-4"
           >
             <button
-              onClick={onPlay}
+              onClick={() => onPlay("thriller")}
               className="cta-pulse rounded-full bg-gold px-8 py-4 font-display text-2xl tracking-[0.2em] text-black transition hover:scale-105"
             >
               PLAY LEFT ON READ
@@ -209,7 +214,7 @@ export default function Home({ onPlay, onEnter, endings = [] }) {
                 <TiltCard className="h-full">
                   <button
                     disabled={!g.ready}
-                    onClick={g.ready ? onPlay : undefined}
+                    onClick={g.ready ? () => onPlay(g.id) : undefined}
                     className={`relative h-full w-full overflow-hidden rounded-2xl border bg-gradient-to-br ${g.bg} p-8 text-left ${
                       g.ready
                         ? "border-gold/50 hover:shadow-[0_0_40px_rgba(212,162,76,0.3)]"
@@ -251,7 +256,7 @@ export default function Home({ onPlay, onEnter, endings = [] }) {
                 <span className="rounded-full border border-fuchsia-400/60 px-4 py-2 text-fuchsia-300">1 secret</span>
               </div>
               <button
-                onClick={onPlay}
+                onClick={() => onPlay("thriller")}
                 className="mt-8 rounded-full bg-gold px-8 py-4 font-display text-2xl tracking-[0.2em] text-black transition hover:scale-105"
               >
                 ENTER DHUNDHGIRI
@@ -260,21 +265,9 @@ export default function Home({ onPlay, onEnter, endings = [] }) {
 
             {/* fake phone chat */}
             <motion.div {...reveal} className="mx-auto w-full max-w-sm">
-              <motion.div
-                className="phone-crt rounded-[2.5rem] border-4 border-white/10 bg-black/70 p-5 shadow-[0_0_60px_rgba(0,0,0,0.8)] backdrop-blur"
-                animate={
-                  messageRumble && !reduceMotion
-                    ? { x: messageRumble % 2 ? [0, -3, 3, -2, 2, 0] : [0, 3, -3, 2, -2, 0] }
-                    : { x: 0 }
-                }
-                transition={{ duration: 0.15, ease: "easeOut" }}
-              >
-                <div className="phone-status font-case">
-                  <span>12:04 AM</span>
-                  <span className="phone-no-signal"><i /> NO SIGNAL</span>
-                </div>
-                <p className="phone-contact mb-4 text-center font-case text-xs uppercase tracking-[0.3em] text-mist">Naina</p>
-                <div className="phone-chat space-y-3">
+              <div className="rounded-[2.5rem] border-4 border-white/10 bg-black/70 p-5 shadow-[0_0_60px_rgba(0,0,0,0.8)] backdrop-blur">
+                <p className="mb-4 text-center font-case text-xs uppercase tracking-[0.3em] text-mist">Naina</p>
+                <div className="space-y-3">
                   {CHAT.map((m, i) => (
                     <motion.div
                       key={i}
@@ -282,9 +275,6 @@ export default function Home({ onPlay, onEnter, endings = [] }) {
                       whileInView={{ opacity: 1, y: 0 }}
                       viewport={{ once: true }}
                       transition={{ delay: 0.5 + i * 0.7 }}
-                      onAnimationComplete={() => {
-                        if (!reduceMotion) setMessageRumble((value) => value + 1);
-                      }}
                       className={`max-w-[80%] rounded-2xl px-4 py-2 text-sm ${
                         m.from === "naina" ? "bg-white/10 text-bone" : "ml-auto bg-gold/90 text-black"
                       }`}
@@ -292,9 +282,6 @@ export default function Home({ onPlay, onEnter, endings = [] }) {
                       {m.text}
                     </motion.div>
                   ))}
-                  <p className="phone-typing font-case text-[10px] uppercase tracking-widest text-mist/60">
-                    Naina is typing<span className="phone-typing-dots">...</span>
-                  </p>
                   <motion.p
                     initial={{ opacity: 0 }}
                     whileInView={{ opacity: 1 }}
@@ -305,7 +292,7 @@ export default function Home({ onPlay, onEnter, endings = [] }) {
                     Delivered · never read
                   </motion.p>
                 </div>
-              </motion.div>
+              </div>
             </motion.div>
           </div>
         </div>
@@ -330,7 +317,9 @@ export default function Home({ onPlay, onEnter, endings = [] }) {
         </div>
       </section>
 
-      <Footer />
+      <FooterFx text="LEFT ON READ">
+        <Footer />
+      </FooterFx>
     </div>
   );
 }

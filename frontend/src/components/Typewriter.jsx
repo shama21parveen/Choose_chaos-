@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-export default function Typewriter({ text, speed = 28, onDone, onTick, className = "" }) {
+export default function Typewriter({ text, speed = 28, onDone, onTick, className = "", caret = "text-red-500" }) {
   const [count, setCount] = useState(0);
   const finished = count >= text.length;
 
@@ -26,7 +26,7 @@ export default function Typewriter({ text, speed = 28, onDone, onTick, className
       className={`cursor-pointer ${className}`}
     >
       {text.slice(0, count)}
-      {!finished && <span className="animate-pulse text-red-500">|</span>}
+      {!finished && <span className={`animate-pulse ${caret}`}>|</span>}
     </p>
   );
 }

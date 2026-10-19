@@ -6,6 +6,7 @@ export const story = {
   id: "left-on-read",
   title: "Left on Read",
   start: "arrival",
+  theme: { meter: "Doubt", glitch: true, heartbeat: true, torch: true, accent: "red" },
   scenes: {
     arrival: {
       mood: "fog",
@@ -58,12 +59,11 @@ export const story = {
       sky: "night",
       particles: "embers",
       fog: 1,
-      // Seconds for the choice timer; if it expires, take the second option (run).
-      timeLimit: 12,
-      timeoutChoice: 1,
       place: "The Lobby",
       time: "12:47 AM",
       scrawl: "SLEEP.",
+      timer: 8,
+      timeout: { next: "ending3", text: "You froze. The tea was already in your hand." },
       text: "His smile drops. 'You are tired,' he says softly, and slides a cup of tea across the counter. 'Drink. Then sleep.' The lights flicker once. Twice. Then everything goes dark.",
       choices: [
         { label: "Drink the tea", next: "ending3" },
@@ -96,6 +96,8 @@ export const story = {
       place: "Room 7, Still",
       time: "1:32 AM",
       scrawl: "WHO IS REALLY MISSING?",
+      timer: 10,
+      timeout: { next: "police", doubt: 1, text: "You panic and run toward the only light you can see." },
       text: "The next pages are empty, except one line written again and again until the paper tears: 'Who is really missing? Who is really missing? Who is really missing?'",
       choices: [
         { label: "Go to the lake. Now.", next: "lake" },
@@ -111,6 +113,8 @@ export const story = {
       fog: 1,
       place: "Dhundhgiri Police Station",
       time: "2:05 AM",
+      timer: 10,
+      timeout: { next: "ending1", text: "You froze. Rawat was already holding the jeep door open." },
       text: "Inspector Rawat opens the door before you knock. 'I was expecting you,' he says. 'I sent you that message. Naina asked me to. She is safe. My jeep is outside.' His voice is warm. His shoes are covered in lake mud.",
       choices: [
         { label: "Get in the jeep", next: "ending1" },
