@@ -6,6 +6,10 @@
 
 Pick a world. Make fast choices. Hunt down the secret endings.
 
+### 👉 **[Play it live: choose-chaos.vercel.app](https://choose-chaos.vercel.app)**
+
+> The free backend sleeps when nobody is around, so the very first login can take up to a minute.
+
 <br/>
 
 ![React](https://img.shields.io/badge/React_19-0a0405?style=for-the-badge&logo=react&logoColor=ff3b3b)
@@ -19,7 +23,7 @@ Pick a world. Make fast choices. Hunt down the secret endings.
 
 | 🔴 Live Demo | 📖 Story Worlds | 🏆 Secret Endings |
 | :---: | :---: | :---: |
-| **Dropping soon** 🚧<br/>*the chaos is still being deployed* | **4** worlds<br/>*2 playable, 2 cooking* | **10** and counting<br/>*some are very well hidden* |
+| **[Play now →](https://choose-chaos.vercel.app)**<br/>*live on Vercel + Render* | **4** worlds<br/>*2 playable, 2 cooking* | **10** and counting<br/>*some are very well hidden* |
 
 </div>
 
@@ -141,8 +145,8 @@ You need Node 18+ and a free [MongoDB Atlas](https://www.mongodb.com/atlas) clus
 
 ```bash
 # 1. clone
-git clone https://github.com/shama21parveen/choose_chaos.git
-cd choose_chaos
+git clone https://github.com/shama21parveen/Choose_chaos-.git
+cd Choose_chaos-
 ```
 
 **Backend** (terminal 1)
@@ -176,7 +180,7 @@ Production build: `npm run build` then `npm run preview`.
 
 ## ☁️ Deployment
 
-The plan: **frontend on Vercel**, **backend on Render**, **database on MongoDB Atlas**. All three have free tiers.
+The setup: **frontend on Vercel**, **backend on Render**, **database on MongoDB Atlas**. All three have free tiers.
 
 ```
  Browser ──► Vercel (React app) ──► Render (Express API) ──► MongoDB Atlas
@@ -200,6 +204,7 @@ The plan: **frontend on Vercel**, **backend on Render**, **database on MongoDB A
 | Root Directory | `backend` |
 | Build Command | `npm install` |
 | Start Command | `npm start` |
+| Health Check Path | `/api/health` |
 
 4. Add **Environment Variables**:
 
@@ -228,7 +233,9 @@ The plan: **frontend on Vercel**, **backend on Render**, **database on MongoDB A
 
 | Key | Value |
 | --- | --- |
-| `VITE_API_URL` | your Render URL, e.g. `https://choose-chaos-api.onrender.com` |
+| `VITE_API_URL` | your Render URL, e.g. `https://choose-chaos.onrender.com` |
+
+> `VITE_` variables are baked in at build time, so redeploy after changing them.
 
 4. Add `frontend/vercel.json` so deep links like `/genre/romance` do not 404 on refresh:
 
@@ -242,13 +249,12 @@ The plan: **frontend on Vercel**, **backend on Render**, **database on MongoDB A
 
 ### 4. Go live checklist
 
-- [ ] Atlas cluster is up and the connection string works
-- [ ] Render service shows **Live**, and `/api/health` responds
-- [ ] `CLIENT_URL` on Render matches the Vercel URL exactly (no trailing slash)
-- [ ] `VITE_API_URL` on Vercel points to the Render URL
-- [ ] Refresh on `/genre/romance` works
-- [ ] Register, log in, unlock an ending, log out and back in: the ending is still there
-- [ ] Paste the live link at the top of this README
+- [x] Atlas cluster is up and the connection string works
+- [x] Render service shows **Live**, and `/api/health` responds
+- [x] `CLIENT_URL` on Render matches the Vercel URL exactly (no trailing slash)
+- [x] `VITE_API_URL` on Vercel points to the Render URL
+- [x] Register and log in work on the live site
+- [x] Live link added at the top of this README
 
 ## 🔐 Security notes
 
@@ -294,7 +300,9 @@ A scene with `ending: { id, title }` finishes the story and unlocks that ending.
 - [x] Backend: register and login with JWT
 - [x] Save unlocked endings to the database
 - [x] "X% of players unlocked this ending" stats
-- [ ] Deploy (Vercel + Render + Atlas)
+- [x] Player profiles with avatars and a trophy wall
+- [x] Deploy (Vercel + Render + Atlas)
+- [ ] Forgot password (email reset)
 - [ ] Sci-Fi story
 - [ ] Horror story
 - [ ] Story map and badges
