@@ -50,7 +50,10 @@ Read everything for free as a guest, or log in so we can keep count of every end
 - 🎧 **Procedural sound** generated live with the Web Audio API (zero audio files). Different music and typing sounds per genre
 - 🌫️ **Living backgrounds**: animated SVG scene art with parallax, plus canvas fog, rain, embers, petals and hearts
 - 🖱️ **Cursors with personality**: an ember with a comet tail on the hub, a beating heart and a love-letter on the rom-com page, sparks and hearts in the footer
-- 👤 **Guest mode** (read free) and login (track your secret endings)
+- 👤 **Guest mode** (read free) and real JWT login (track your secret endings across devices)
+- 🧙 **Player profiles**: Duolingo-style avatars, a username, rank titles (Bystander to Chaos Legend), a sparkling profile page with a trophy wall, and a shareable `/u/username` link
+- 📊 **Live stats**: every ending shows what % of players unlocked it
+- 🔄 **Guest to player**: endings you unlock as a guest are merged into your account when you log in
 - 📱 Fully responsive, and kind to `prefers-reduced-motion`
 
 ## 🛠️ Tech Stack
@@ -63,11 +66,11 @@ Read everything for free as a guest, or log in so we can keep count of every end
 - React Router
 - Web Audio API, Canvas, SVG
 
-**Backend** *(in progress)*
+**Backend**
 
 - Node.js + Express
 - MongoDB Atlas + Mongoose
-- JWT authentication
+- JWT authentication (bcrypt password hashing, zod validation, rate limiting, helmet, CORS)
 
 ## 📁 Project Structure
 
@@ -76,24 +79,33 @@ choose_chaos/
 ├── frontend/
 │   ├── index.html
 │   ├── vercel.json             # makes /genre/... links work after deploy
+│   ├── .env.example            # VITE_API_URL
 │   ├── public/                 # favicon
 │   └── src/
-│       ├── App.jsx             # app shell + routes
-│       ├── context.js          # shared state (endings, user, sound)
-│       ├── hub.css             # hub + rom-com page styles
+│       ├── App.jsx             # app shell, routes, login + sync with the API
+│       ├── api.js              # every call to the backend lives here
+│       ├── context.js          # shared state (endings, user, sound, stats)
+│       ├── hub.css, profile.css
 │       ├── pages/
 │       │   ├── Hub.jsx         # multi-genre landing page
 │       │   ├── GenrePage.jsx   # /genre/:id
 │       │   ├── RomancePage.jsx # rom-com landing page
-│       │   └── Play.jsx        # /play/:id (the story player)
-│       ├── components/         # StoryView, SceneArt, Particles, Footer, cursors...
-│       ├── data/
-│       │   ├── genres.js       # every world on the hub
-│       │   ├── story.js        # thriller story
-│       │   ├── romance.js      # rom-com story
-│       │   └── stories.js      # story registry
+│       │   ├── Play.jsx        # /play/:id (the story player)
+│       │   └── Profile.jsx     # /profile and /u/:username
+│       ├── components/         # AuthModal, AvatarPic, SparkleField, NavUser, cursors...
+│       ├── data/               # genres.js, story.js, romance.js, stories.js
 │       └── audio/sound.js      # procedural sound engine
-└── backend/                    # Express + MongoDB API (in progress)
+└── backend/
+    ├── .env.example
+    └── src/
+        ├── server.js           # starts the API
+        ├── app.js              # middleware + routes
+        ├── config/             # env.js, db.js (MongoDB Atlas)
+        ├── models/             # User.js, Unlock.js
+        ├── routes/             # auth.js, progress.js, stats.js, profile.js
+        ├── middleware/         # auth.js (JWT check), error.js
+        ├── data/               # endings.js, avatars.js
+        └── utils/              # jwt.js, httpError.js
 ```
 
 ## 🧭 Routes
@@ -105,27 +117,62 @@ choose_chaos/
 | `/genre/romance` | Rom-Com landing page |
 | `/genre/scifi`, `/genre/horror` | Coming soon pages |
 | `/play/thriller`, `/play/romance` | The story player |
+| `/profile` | Your profile (needs login) |
+| `/u/:username` | Public profile of any player |
+
+## 🔌 API
+
+| Method | Endpoint | Auth | What it does |
+| --- | --- | :---: | --- |
+| GET | `/api/health` | - | Server + database status |
+| POST | `/api/auth/register` | - | Create account (username, avatar, email, password) |
+| POST | `/api/auth/login` | - | Log in, returns a JWT |
+| GET | `/api/auth/me` | JWT | Current user |
+| GET | `/api/progress` | JWT | My unlocked endings |
+| POST | `/api/progress/ending` | JWT | Save one unlocked ending |
+| POST | `/api/progress/sync` | JWT | Merge guest endings after login |
+| GET | `/api/stats/endings` | - | % of players who unlocked each ending |
+| GET / PATCH | `/api/profile/me` | JWT | My profile / change avatar and username |
+| GET | `/api/profile/:username` | - | Public profile (never shows email) |
 
 ## 🚀 Run it locally
+
+You need Node 18+ and a free [MongoDB Atlas](https://www.mongodb.com/atlas) cluster.
 
 ```bash
 # 1. clone
 git clone https://github.com/shama21parveen/choose_chaos.git
-cd choose_chaos/frontend
+cd choose_chaos
+```
 
-# 2. install and start
+**Backend** (terminal 1)
+
+```bash
+cd backend
 npm install
+cp .env.example .env      # Windows: copy .env.example .env
+# open .env and fill MONGO_URI and JWT_SECRET
+npm run dev               # http://localhost:5000/api/health
+```
+
+| `.env` key | What to put |
+| --- | --- |
+| `MONGO_URI` | Atlas connection string, with `/choosechaos` after `.net` |
+| `JWT_SECRET` | Any long random string (16+ characters) |
+| `CLIENT_URL` | `http://localhost:5173` |
+
+**Frontend** (terminal 2)
+
+```bash
+cd frontend
+npm install
+cp .env.example .env      # VITE_API_URL=http://localhost:5000
 npm run dev
 ```
 
 Open **http://localhost:5173** and pick your poison.
 
-Production build:
-
-```bash
-npm run build
-npm run preview
-```
+Production build: `npm run build` then `npm run preview`.
 
 ## ☁️ Deployment
 
@@ -203,6 +250,15 @@ The plan: **frontend on Vercel**, **backend on Render**, **database on MongoDB A
 - [ ] Register, log in, unlock an ending, log out and back in: the ending is still there
 - [ ] Paste the live link at the top of this README
 
+## 🔐 Security notes
+
+- Passwords are hashed with **bcrypt**, never stored or returned in plain text
+- Login returns a **JWT** (7 days); protected routes check it on every request
+- Inputs are validated with **zod**; only known ending ids are accepted
+- **Rate limiting** on the API and a stricter one on login/register
+- **helmet** security headers and a **CORS** allow-list (only your frontend URL)
+- Public profiles never expose email addresses
+
 ## 📝 How a story is written
 
 Each story is a plain JavaScript object: a set of scenes, and every scene lists its choices.
@@ -235,9 +291,9 @@ A scene with `ending: { id, title }` finishes the story and unlocks that ending.
 - [x] Story engine with timed choices, meters and endings
 - [x] Thriller and Rom-Com stories
 - [x] Multi-genre hub, genre pages, responsive design
-- [ ] Backend: register and login with JWT
-- [ ] Save unlocked endings to the database
-- [ ] "X% of players unlocked this ending" stats
+- [x] Backend: register and login with JWT
+- [x] Save unlocked endings to the database
+- [x] "X% of players unlocked this ending" stats
 - [ ] Deploy (Vercel + Render + Atlas)
 - [ ] Sci-Fi story
 - [ ] Horror story

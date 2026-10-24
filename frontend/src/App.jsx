@@ -4,7 +4,9 @@ import { AppContext } from "./context";
 import Hub from "./pages/Hub";
 import GenrePage from "./pages/GenrePage";
 import Play from "./pages/Play";
+import Profile from "./pages/Profile";
 import AuthModal from "./components/AuthModal";
+import { api, getToken, setToken } from "./api";
 import { startAudio, toggleMute, isStarted, isMuted } from "./audio/sound";
 
 const ENDINGS_KEY = "choose-chaos-endings";
@@ -35,16 +37,64 @@ function ScrollToTop() {
 }
 
 // App = the shell. It owns the things every page needs
-// (unlocked endings, sound, demo login) and decides which page to show.
+// (unlocked endings, sound, login + API sync) and decides which page to show.
 export default function App() {
   const { pathname } = useLocation();
   const [endings, setEndings] = useState(() => read(ENDINGS_KEY, []));
   const [user, setUser] = useState(() => read(USER_KEY, null));
   const [soundOn, setSoundOn] = useState(false);
   const [authOpen, setAuthOpen] = useState(false);
+  const [stats, setStats] = useState(null); // { totalPlayers, endings: { r1: {count, percent} } }
 
   useEffect(() => write(ENDINGS_KEY, endings), [endings]);
   useEffect(() => write(USER_KEY, user), [user]);
+
+  const loadStats = useCallback(() => {
+    api.stats().then(setStats).catch(() => {}); // stats are a bonus, never block the app
+  }, []);
+
+  // merge this browser's endings into the account, then show the account's full list
+  const syncEndings = useCallback(async () => {
+    const local = read(ENDINGS_KEY, []);
+    const { endings: server } = await api.syncEndings(local);
+    setEndings([...new Set([...local, ...server])]);
+    loadStats();
+  }, [loadStats]);
+
+  const logout = useCallback(() => {
+    setToken(null);
+    setUser(null);
+    setEndings([]); // so the next person on this browser does not inherit these
+  }, []);
+
+  // called by AuthModal after a successful register / login
+  const handleAuth = useCallback(
+    async ({ token, user: u }) => {
+      setToken(token);
+      setUser(u);
+      await syncEndings().catch(() => {});
+    },
+    [syncEndings]
+  );
+
+  // on page load: public stats, and if a token exists check it is still valid
+  useEffect(() => {
+    loadStats();
+    if (!getToken()) {
+      // a "logged in" user without a token is left over from the old demo login: forget it
+      if (read(USER_KEY, null)) setUser(null);
+      return;
+    }
+    api
+      .me()
+      .then(({ user: u }) => {
+        setUser(u);
+        return syncEndings();
+      })
+      .catch((err) => {
+        if (err.status === 401) logout(); // token expired or invalid
+      });
+  }, [loadStats, syncEndings, logout]);
 
   // Mouse position -> CSS variables (parallax + torch + neon glow)
   useEffect(() => {
@@ -78,7 +128,11 @@ export default function App() {
 
   const addEnding = useCallback((id) => {
     setEndings((prev) => (prev.includes(id) ? prev : [...prev, id]));
-  }, []);
+    if (getToken()) {
+      // failure is fine: it stays in localStorage and syncs on the next load
+      api.saveEnding(id).then(loadStats).catch(() => {});
+    }
+  }, [loadStats]);
 
   const ctx = useMemo(
     () => ({
@@ -88,11 +142,12 @@ export default function App() {
       ensureAudio,
       toggleSound,
       user,
-      login: (u) => setUser(u),
-      logout: () => setUser(null),
+      stats,
+      logout,
+      updateUser: setUser,
       openAuth: () => setAuthOpen(true),
     }),
-    [endings, addEnding, soundOn, ensureAudio, toggleSound, user]
+    [endings, addEnding, soundOn, ensureAudio, toggleSound, user, stats, logout]
   );
 
   return (
@@ -103,13 +158,15 @@ export default function App() {
           <Route path="/" element={<Hub />} />
           <Route path="/genre/:id" element={<GenrePage />} />
           <Route path="/play/:id" element={<Play />} />
+          <Route path="/profile" element={<Profile />} />
+          <Route path="/u/:username" element={<Profile />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
 
         <AuthModal
           open={authOpen}
           onClose={() => setAuthOpen(false)}
-          onLogin={(u) => setUser(u)}
+          onAuth={handleAuth}
         />
       </div>
     </AppContext.Provider>

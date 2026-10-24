@@ -12,6 +12,7 @@ import Footer from "../components/Footer";
 import FooterFx from "../components/FooterFx";
 import PathsBg from "../components/PathsBg";
 import HubCursor from "../components/HubCursor";
+import NavUser from "../components/NavUser";
 
 const WORDS = ["your fear.", "your crush.", "your fate.", "your chaos."];
 const TICKER = ["READ FREE", "CHOOSE FAST", "4 WORLDS", "NO UNDO", "SECRET ENDINGS", "HEADPHONES ON", "TRUST NOBODY", "FALL FOR HIM ANYWAY"];
@@ -58,19 +59,7 @@ function Embers() {
 }
 
 function LoginButton() {
-  const { user, logout, openAuth } = useApp();
-  return user ? (
-    <div className="flex items-center gap-2 rounded-full border border-[#ff5a3c]/50 bg-black/40 py-1 pl-4 pr-1">
-      <span className="font-case text-xs uppercase tracking-widest text-[#fff1e0]">Hi, {user.name}</span>
-      <button onClick={logout} className="rounded-full bg-white/10 px-3 py-1 font-case text-[10px] uppercase tracking-widest text-white/70 hover:text-white">
-        Log out
-      </button>
-    </div>
-  ) : (
-    <button onClick={openAuth} className="neon-btn" aria-label="Log in or join">
-      <span>LOG IN</span>
-    </button>
-  );
+  return <NavUser />;
 }
 
 function Rotator() {
@@ -106,7 +95,7 @@ const fan = [
 
 export default function Hub() {
   const navigate = useNavigate();
-  const { endings, user, ensureAudio, openAuth } = useApp();
+  const { endings, user, ensureAudio, openAuth, stats } = useApp();
   const [hovered, setHovered] = useState(null);
   const shown = user ? endings : []; // guests can read, but unlocked endings show after login
 
@@ -373,6 +362,11 @@ export default function Hub() {
                     <div key={e.id} className={`trophy ${on ? "on" : ""}`}>
                       <div className="text-2xl">{on ? "🏆" : "🔒"}</div>
                       <div className="mt-1 font-display text-lg leading-tight tracking-wide text-[#fff1e0]">{on ? e.title : "???"}</div>
+                      {stats?.endings?.[e.id] && (
+                        <div className="mt-1 font-case text-[10px] uppercase tracking-widest text-[#ffb347]/80">
+                          {stats.endings[e.id].percent}% of players
+                        </div>
+                      )}
                     </div>
                   );
                 })}
